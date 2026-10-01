@@ -6,6 +6,7 @@
 // Битовое поле
 
 #include "tbitfield.h"
+#include "iomanip"
 
 // Fake variables used as placeholders in tests
 static const int FAKE_INT = -1;
@@ -135,7 +136,7 @@ TBitField TBitField::operator|(const TBitField &bf) // операция "или"
         tmp.pMem[i] = pMem[i];
     }
     for (int i = 0; i < bf.MemLen; i++) {
-        tmp.pMem[i] || = bf.pMem[i];
+        tmp.pMem[i] |= bf.pMem[i];
     }
     return tmp;
 }
@@ -170,10 +171,30 @@ TBitField TBitField::operator~(void) // отрицание
 
 istream &operator>>(istream &istr, TBitField &bf) // ввод
 {
+    int i = 0;
+    char ch;
+    while (1) {
+        istr >> ch;
+        if (ch == '0') {
+            bf.ClrBit(i++);
+        }
+        else {
+            if (ch == '1') {
+                bf.SetBit(i++);
+            }
+            else
+                break;
+        }
+    }
     return istr;
 }
 
 ostream &operator<<(ostream &ostr, const TBitField &bf) // вывод
 {
+    ostr << setbase(2);
+    for (int i = 0; i < bf.BitLen; i++) {
+        ostr << bf.GetBit(i) << " ";
+    }
+    cout << endl;
     return ostr;
 }
