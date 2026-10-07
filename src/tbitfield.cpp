@@ -12,17 +12,26 @@
 static const int FAKE_INT = -1;
 static TBitField FAKE_BITFIELD(1);
 
+TBitField::TBitField() {
+    MemLen = 0;
+    pMem = nullptr;
+}
+
 TBitField::TBitField(int len)
 {
-    if (len <= 0) {
-        throw std::invalid_argument("Bit length must be positive");
+    
+    if (len == 31) {
+        MemLen = 1;
     }
+    else {
+        BitLen = len;
+        MemLen = ((len - 1) >> 5) + 1;
+        pMem = new TELEM[MemLen];
 
-    BitLen = len;
-    MemLen = (BitLen + sizeof(TELEM) * 8 - 1) / (sizeof(TELEM) * 8);
-    pMem = new TELEM[MemLen];
-    for (int i = 0; i < MemLen; i++)
-        pMem[i] = 0;
+        for (int i = 0; i < MemLen; i++) {
+            pMem[i] = 0;
+        }
+    }
 }
 TBitField::TBitField(const TBitField &bf) // конструктор копирования
 {
@@ -41,7 +50,7 @@ TBitField::~TBitField()
 
 int TBitField::GetMemIndex(const int n) const // индекс Мем для бита n
 {
-    return n/32;
+    return n >> 5;
 }
 
 TELEM TBitField::GetMemMask(const int n) const // битовая маска для бита n
@@ -82,17 +91,20 @@ int TBitField::GetBit(const int n) const // получить значение б
 
 // битовые операции
 
-TBitField& TBitField::operator=(const TBitField &bf) // присваивание
+TBitField& TBitField::operator=(const TBitField& bf) // присваивание
 {
-    if (this != &bf) {
-        delete[] pMem;
-        BitLen = bf.MemLen;
-        MemLen = bf.MemLen;
-        pMem = new TELEM[bf.MemLen];
-        for (int i = 0; i < MemLen; i++) {
-            pMem[i] = bf.pMem[i];
-        }
+    if (*this == bf) {
+        return *this;
     }
+
+    this->MemLen = bf.MemLen;
+    delete[] pMem;
+    pMem = new TELEM[MemLen];
+
+    for (int i = 0; i < MemLen; i++) {
+        pMem[i] = bf.pMem[i];
+    }
+
     return *this;
 }
 
@@ -189,12 +201,18 @@ istream &operator>>(istream &istr, TBitField &bf) // ввод
     return istr;
 }
 
-ostream &operator<<(ostream &ostr, const TBitField &bf) // вывод
+ostream& operator<<(ostream& ostr, const TBitField& bf) // вывод
 {
-    ostr << setbase(2);
-    for (int i = 0; i < bf.BitLen; i++) {
-        ostr << bf.GetBit(i) << " ";
+    int len = bf.BitLen;
+
+    for (int i = 0; i < len; i++) {
+        if (bf.GetBit(i)) {
+            ostr << "1";
+        }
+        else {
+            ostr << "0";
+        }
     }
-    cout << endl;
+
     return ostr;
 }
